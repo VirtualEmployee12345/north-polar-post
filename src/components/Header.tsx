@@ -10,24 +10,24 @@ const Header: React.FC = () => {
         </Link>
 
         <nav aria-label="Primary" className="hidden sm:block">
-          <ul className="flex items-center gap-6 text-sm font-medium text-amber-800">
+          <ul className="flex items-center gap-8 text-base font-medium text-[#5c4033]">
             <li>
-              <Link href="/our-story" className="transition-colors hover:text-amber-950">
+              <Link href="/our-story" className="font-serif transition-colors hover:text-amber-950">
                 Our Story
               </Link>
             </li>
             <li>
-              <a href="/" className="transition-colors hover:text-amber-950">
+              <Link href="/#how-it-works" className="font-serif transition-colors hover:text-amber-950">
                 How It Works
-              </a>
+              </Link>
             </li>
             <li>
-              <Link href="/faq" className="transition-colors hover:text-amber-950">
+              <Link href="/faq" className="font-serif transition-colors hover:text-amber-950">
                 FAQ
               </Link>
             </li>
             <li>
-              <Link href="/contact" className="transition-colors hover:text-amber-950">
+              <Link href="/contact" className="font-serif transition-colors hover:text-amber-950">
                 Contact
               </Link>
             </li>
