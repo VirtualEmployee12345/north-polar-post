@@ -27,9 +27,13 @@ const HeroSection: React.FC = () => {
           </div>
         </div>
 
-        {/* illustration placeholder */}
-        <div className="flex-1">
-          <img src="/illustration.png" alt="Fireplace scene" />
+        {/* illustration */}
+        <div className="flex-1 relative">
+          <img 
+            src="/illustration.png" 
+            alt="Cozy fireplace scene with handwritten letters, a quill pen, and a warm mug of cocoa" 
+            className="w-full h-auto rounded-lg shadow-2xl"
+          />
         </div>
       </div>
       <div
