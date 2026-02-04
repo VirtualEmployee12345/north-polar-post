@@ -1,4 +1,5 @@
 import React from 'react';
+import CTAButton from './CTAButton';
 
 const HeroSection: React.FC = () => {
   return (
@@ -21,16 +22,10 @@ const HeroSection: React.FC = () => {
             Pole to your doorstep this December.
           </p>
 
-          import CtaWaxSealButton from './CTAButton';
-
-// ... (rest of the Hero component code)
-
-          {/* CTA placeholder */}
-          <CtaWaxSealButton />
+          <div className="mt-8">
+            <CTAButton />
+          </div>
         </div>
-
-// ... (rest of the Hero component code)
-
 
         {/* illustration placeholder */}
         <div className="flex-1">
