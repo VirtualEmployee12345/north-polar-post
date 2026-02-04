@@ -39,15 +39,9 @@ services:
           name: north-polar-post-db
           property: connectionString
       - key: HANDWRYTTEN_API_KEY
-        fromService:
-          name: north-polar-post
-          type: web
-          property: envVars.HANDWRYTTEN_API_KEY
+        sync: false
       - key: HANDWRYTTEN_STATIONERY_ID
-        fromService:
-          name: north-polar-post
-          type: web
-          property: envVars.HANDWRYTTEN_STATIONERY_ID
+        sync: false
 
 databases:
   - name: north-polar-post-db
