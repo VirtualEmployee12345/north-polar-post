@@ -1,13 +1,13 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
-import OrderForm from '@/components/OrderForm';
+import Testimonials from '@/components/Testimonials';
 
 export default function Home() {
   return (
     <main>
       <Header />
       <Hero />
-      <OrderForm />
+      <Testimonials />
     </main>
   );
 }

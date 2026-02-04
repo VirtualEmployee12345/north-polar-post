@@ -20,7 +20,91 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(to bottom, #f5e6c8, #e8d4a8);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  position: relative;
+  overflow-x: hidden;
 }
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><g fill-opacity="0.05"><circle fill="%23f5e6c8" cx="400" cy="400" r="600"/><circle fill="%23e8d4a8" cx="400" cy="400" r="500"/><circle fill="%23d3bda1" cx="400" cy="400" r="400"/><circle fill="%23b8a18a" cx="400" cy="400" r="300"/><circle fill="%23a08b76" cx="400" cy="400" r="200"/><circle fill="%238a7563" cx="400" cy="400" r="100"/></g></svg>');
+  background-size: 800px 800px;
+  animation: noise 2s linear infinite;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+@keyframes noise {
+  0%, 100% {
+    background-position: 0 0;
+  }
+  10% {
+    background-position: -5% -10%;
+  }
+  20% {
+    background-position: -15% 5%;
+  }
+  30% {
+    background-position: 7% -25%;
+  }
+  40% {
+    background-position: 20% 25%;
+  }
+  50% {
+    background-position: -25% 10%;
+  }
+  60% {
+    background-position: 15% 5%;
+  }
+  70% {
+    background-position: 0% 15%;
+  }
+  80% {
+    background-position: 25% 35%;
+  }
+  90% {
+    background-position: -10% 10%;
+  }
+}
+
+.sparkle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sparkle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: white;
+  border-radius: 50%;
+  animation: sparkle-animation 5s linear infinite;
+}
+
+@keyframes sparkle-animation {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { Playfair_Display } from "next/font/google";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -9,6 +11,11 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair-display",
   subsets: ["latin"],
 });
 
@@ -27,6 +34,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="sparkle-container">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div
+              key={i}
+              className="sparkle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+              }}
+            />
+          ))}
+        </div>
         {children}
       </body>
     </html>
