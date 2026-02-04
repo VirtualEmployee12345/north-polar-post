@@ -2,7 +2,7 @@ services:
   - type: web
     name: north-polar-post
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
@@ -27,7 +27,7 @@ services:
   - type: cron
     name: north-polar-post-scheduler
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm run start:cron
     schedule: 0 8 * * *
@@ -45,5 +45,5 @@ services:
 
 databases:
   - name: north-polar-post-db
-    plan: starter
+    plan: free
     ipAllowList: []
