@@ -27,9 +27,9 @@ const Header: React.FC = () => {
               </Link>
             </li>
             <li>
-              <a href="#contact" className="transition-colors hover:text-amber-950">
+              <Link href="/contact" className="transition-colors hover:text-amber-950">
                 Contact
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
