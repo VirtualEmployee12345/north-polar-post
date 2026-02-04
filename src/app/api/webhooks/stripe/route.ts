@@ -88,7 +88,9 @@ export async function POST(request: Request) {
       }
 
       // Get shipping address
-      const shipping = session.shipping_details
+      // Note: Stripe's types may not fully match the webhook payload
+      const sessionData = session as any
+      const shipping = sessionData.shipping_details || sessionData.shipping
       const shippingAddress = shipping?.address ? {
         line1: shipping.address.line1,
         line2: shipping.address.line2,
