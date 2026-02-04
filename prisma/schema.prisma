@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  FAILED
+}
+
+enum LetterStatus {
+  PENDING
+  SCHEDULED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+model Order {
+  id                      String   @id @default(uuid())
+  stripeCheckoutSessionId String   @unique
+  stripePaymentIntentId String?
+  status                  OrderStatus @default(PENDING)
+  
+  // Child details (from form)
+  childName               String
+  city                    String   // city_custom1
+  goodDeed                String   // deed_custom2
+  specialWish             String   // wish_custom3
+  
+  // Shipping address (JSON for flexibility)
+  shippingAddress         Json?
+  
+  // Payment details
+  amount                  Decimal  @default(39.99)
+  currency                String   @default("USD")
+  
+  // Timestamps
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  // Relations
+  letters                 Letter[]
+}
+
+model Letter {
+  id                  String       @id @default(uuid())
+  orderId             String
+  sequenceNumber      Int          // 1, 2, or 3
+  status              LetterStatus @default(PENDING)
+  scheduledDate       DateTime
+  sentDate            DateTime?
+  handwryttenCardId   String?
+  content             String       @db.Text // Full letter prose with variables
+  
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+  @@index([status, scheduledDate])
+}
