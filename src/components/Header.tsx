@@ -22,9 +22,9 @@ const Header: React.FC = () => {
               </a>
             </li>
             <li>
-              <a href="#faq" className="transition-colors hover:text-amber-950">
+              <Link href="/faq" className="transition-colors hover:text-amber-950">
                 FAQ
-              </a>
+              </Link>
             </li>
             <li>
               <a href="#contact" className="transition-colors hover:text-amber-950">
