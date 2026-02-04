@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: north-polar-post
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: north-polar-post-db
+          property: connectionString
+      - key: HANDWRYTTEN_API_KEY
+        sync: false
+      - key: HANDWRYTTEN_STATIONERY_ID
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+    healthCheckPath: /
+
+  - type: cron
+    name: north-polar-post-scheduler
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:cron
+    schedule: 0 8 * * *
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: north-polar-post-db
+          property: connectionString
+      - key: HANDWRYTTEN_API_KEY
+        fromService:
+          name: north-polar-post
+          type: web
+          property: envVars.HANDWRYTTEN_API_KEY
+      - key: HANDWRYTTEN_STATIONERY_ID
+        fromService:
+          name: north-polar-post
+          type: web
+          property: envVars.HANDWRYTTEN_STATIONERY_ID
+
+databases:
+  - name: north-polar-post-db
+    plan: starter
+    ipAllowList: []
