@@ -11,7 +11,11 @@ if (!datasourceUrl) {
 }
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  datasourceUrl,
+  datasources: {
+    db: {
+      url: datasourceUrl,
+    },
+  },
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
