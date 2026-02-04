@@ -9,11 +9,32 @@ const OrderForm: React.FC = () => {
     goodDeed: "",
     specialWish: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("Form data:", formData);
-    // TODO: Integrate with Stripe Checkout
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to start checkout. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Something went wrong. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -125,14 +146,17 @@ const OrderForm: React.FC = () => {
             <div className="flex justify-center mt-8 md:mt-12">
               <button
                 type="submit"
-                className="relative inline-flex items-center justify-center h-16 md:h-20 px-8 md:px-12 rounded-full bg-gradient-to-b from-[#c44536] via-[#a33224] to-[#7a1f16] text-white font-serif text-base md:text-lg tracking-wide shadow-[0_6px_0_#4a1209,0_10px_25px_rgba(0,0,0,0.35)] transition-transform duration-150 active:translate-y-1 active:shadow-[0_4px_0_#4a1209,0_6px_15px_rgba(0,0,0,0.35)] hover:from-[#d45546] hover:via-[#b34232] hover:to-[#8a2f22]"
+                disabled={isLoading}
+                className="relative inline-flex items-center justify-center h-16 md:h-20 px-8 md:px-12 rounded-full bg-gradient-to-b from-[#c44536] via-[#a33224] to-[#7a1f16] text-white font-serif text-base md:text-lg tracking-wide shadow-[0_6px_0_#4a1209,0_10px_25px_rgba(0,0,0,0.35)] transition-transform duration-150 active:translate-y-1 active:shadow-[0_4px_0_#4a1209,0_6px_15px_rgba(0,0,0,0.35)] hover:from-[#d45546] hover:via-[#b34232] hover:to-[#8a2f22] disabled:opacity-70 disabled:cursor-not-allowed"
                 aria-label="Complete Purchase - $39.99"
               >
                 {/* Wax seal icon */}
                 <span className="absolute left-2 md:left-3 w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-[#c44536] to-[#7a1f16] shadow-inner border-2 border-[#e8b4a0] flex items-center justify-center text-xs">
-                  ✉
+                  {isLoading ? '...' : '✉'}
                 </span>
-                <span className="ml-8 md:ml-10">Complete Purchase - $39.99</span>
+                <span className="ml-8 md:ml-10">
+                  {isLoading ? 'Preparing Magic...' : 'Complete Purchase - $39.99'}
+                </span>
               </button>
             </div>
           </form>
