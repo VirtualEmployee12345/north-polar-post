@@ -11,7 +11,7 @@ export function getStripe(): Stripe {
     }
     
     stripeClient = new Stripe(secretKey, {
-      apiVersion: '2025-01-27.acacia',
+      apiVersion: '2025-01-27.acacia' as const,
     })
   }
   return stripeClient
