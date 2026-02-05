@@ -34,33 +34,25 @@ const OrderConfirmationContent: React.FC = () => {
       }
 
       try {
-        setIsLoading(false);
+        // Fetch real order data from API
+        const response = await fetch(`/api/orders?sessionId=${encodeURIComponent(sessionId)}`)
+        const data = await response.json()
         
-        setOrder({
-          id: sessionId.slice(-8),
-          childName: 'Your Child',
-          orderNumber: `NP-${sessionId.slice(-6).toUpperCase()}`,
-          orderDate: new Date().toLocaleDateString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric' 
-          }),
-          total: '$39.99',
-          letters: [
-            { sequenceNumber: 1, scheduledDate: 'Early December' },
-            { sequenceNumber: 2, scheduledDate: 'Mid-December' },
-            { sequenceNumber: 3, scheduledDate: 'Just before Christmas Eve' },
-          ],
-        });
+        if (!data.success || !data.order) {
+          throw new Error(data.error || 'Order not found')
+        }
+        
+        setOrder(data.order)
+        setIsLoading(false)
       } catch (err) {
-        console.error('Failed to fetch order:', err);
-        setError('Failed to load order details');
-        setIsLoading(false);
+        console.error('Failed to fetch order:', err)
+        setError('Failed to load order details. The elves are still processing your order!')
+        setIsLoading(false)
       }
     }
 
-    fetchOrderDetails();
-  }, [sessionId]);
+    fetchOrderDetails()
+  }, [sessionId])
 
   if (isLoading) {
     return (

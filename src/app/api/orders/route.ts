@@ -25,24 +25,75 @@ export async function POST(request: Request) {
   }
 }
 
-// GET /api/orders - Get order status (for order lookup page)
+// GET /api/orders?sessionId=xxx - Get order by Stripe session ID
+// GET /api/orders?orderId=xxx - Get order by order ID
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
+    const sessionId = searchParams.get('sessionId')
     const orderId = searchParams.get('orderId')
     
-    if (!orderId) {
+    if (!sessionId && !orderId) {
       return NextResponse.json(
-        { success: false, error: 'Order ID required' },
+        { success: false, error: 'sessionId or orderId required' },
         { status: 400 }
       )
     }
     
-    // TODO: Fetch order with letters
+    // Fetch order with letters
+    const order = await prisma.order.findFirst({
+      where: sessionId 
+        ? { stripeCheckoutSessionId: sessionId }
+        : { id: orderId! },
+      include: {
+        letters: {
+          orderBy: { sequenceNumber: 'asc' }
+        }
+      }
+    })
+    
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: 'Order not found' },
+        { status: 404 }
+      )
+    }
+    
+    // Format dates for display
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+    
+    // Format letter scheduled dates nicely
+    const getLetterDisplayDate = (date: Date, index: number) => {
+      const d = new Date(date)
+      const dec25 = new Date(d.getFullYear(), 11, 25) // Dec 25
+      const daysUntilChristmas = Math.ceil((dec25.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (daysUntilChristmas > 20) return 'Early December'
+      if (daysUntilChristmas > 10) return 'Mid-December'
+      return 'Just before Christmas Eve'
+    }
     
     return NextResponse.json({ 
       success: true, 
-      order: null // placeholder
+      order: {
+        id: order.id,
+        childName: order.childName,
+        orderNumber: `NP-${order.id.slice(-6).toUpperCase()}`,
+        orderDate: formatDate(order.createdAt),
+        total: `$${order.amount.toFixed(2)}`,
+        status: order.status,
+        letters: order.letters.map((letter, idx) => ({
+          sequenceNumber: letter.sequenceNumber,
+          scheduledDate: getLetterDisplayDate(letter.scheduledDate, idx),
+          status: letter.status
+        }))
+      }
     })
   } catch (error) {
     console.error('Order fetch error:', error)
