@@ -3,6 +3,9 @@ import { stripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { headers } from 'next/headers'
 
+// Force dynamic to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 // Letter templates from the manifest

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/orders - Create a new order after Stripe checkout
 export async function POST(request: Request) {
   try {

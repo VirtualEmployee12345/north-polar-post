@@ -4,24 +4,37 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-function createPrismaClient() {
+// Lazy creation - only instantiate when actually used
+function getPrismaClient(): PrismaClient {
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma
+  }
+
   const databaseUrl = process.env.DATABASE_URL
   
   if (!databaseUrl) {
-    // During build time, return a dummy client that will error if actually used
-    // This allows Next.js to complete static generation
-    if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-      console.warn('DATABASE_URL not set - Prisma client not initialized')
-      return null as unknown as PrismaClient
-    }
     throw new Error('DATABASE_URL environment variable is not set')
   }
 
-  return new PrismaClient()
+  const client = new PrismaClient()
+  
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = client
+  }
+  
+  return client
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Export a proxy that lazily initializes on first use
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_, prop: string | symbol) {
+    const client = getPrismaClient()
+    const value = client[prop as keyof PrismaClient]
+    if (typeof value === 'function') {
+      return value.bind(client)
+    }
+    return value
+  }
+})
 
 export default prisma
