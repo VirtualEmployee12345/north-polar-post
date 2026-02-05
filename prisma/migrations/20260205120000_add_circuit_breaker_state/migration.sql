@@ -31,3 +31,4 @@ CREATE UNIQUE INDEX "CircuitBreakerState_service_key" ON "CircuitBreakerState"("
 
 -- CreateIndex
 CREATE UNIQUE INDEX "CronRun_name_key" ON "CronRun"("name");
+-- Migration check Thu Feb  5 18:08:26 EST 2026
