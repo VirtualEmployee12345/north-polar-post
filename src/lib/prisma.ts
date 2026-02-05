@@ -21,3 +21,4 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 export default prisma
+// Build timestamp: Wed Feb  4 19:03:52 EST 2026
