@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
+// Force dynamic rendering - useSearchParams requires it
+export const dynamic = 'force-dynamic';
+
 interface OrderDetails {
   id: string;
   childName: string;
