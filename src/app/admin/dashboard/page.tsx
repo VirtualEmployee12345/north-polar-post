@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   const todayStart = startOfToday(now)
   const weekStart = startOfWeek(now)
 
-  // Wrap queries in try/catch to handle missing tables gracefully
+  // Default values if queries fail
   let ordersToday = 0
   let ordersWeek = 0
   let ordersAll = 0
@@ -39,42 +39,57 @@ export default async function DashboardPage() {
   let circuitStates: any[] = []
   let cronRun: any = null
   let recentFailures: any[] = []
-  let error: string | null = null
+  let hasError = false
+  let errorMessage = ''
 
   try {
-    ;[
-      ordersToday,
-      ordersWeek,
-      ordersAll,
-      letterGroups,
-      dlqCount,
-      circuitStates,
-      cronRun,
-      recentFailures,
-    ] = await Promise.all([
-      prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
-      prisma.order.count({ where: { createdAt: { gte: weekStart } } }),
-      prisma.order.count(),
-      prisma.letter.groupBy({ by: ['status'], _count: { status: true } }),
-      prisma.failedLetter.count({ where: { resolved: false } }),
-      prisma.circuitBreakerState.findMany({ orderBy: { service: 'asc' } }),
-      prisma.cronRun.findUnique({ where: { name: 'letterProcessor' } }),
-      prisma.failedLetter.findMany({
-        where: { resolved: false },
-        orderBy: { lastAttemptAt: 'desc' },
-        take: 10,
-        include: {
-          letter: {
-            include: {
-              order: true,
-            },
+    // Fetch orders
+    ordersToday = await prisma.order.count({ 
+      where: { createdAt: { gte: todayStart } } 
+    })
+    ordersWeek = await prisma.order.count({ 
+      where: { createdAt: { gte: weekStart } } 
+    })
+    ordersAll = await prisma.order.count()
+    
+    // Fetch letter stats
+    letterGroups = await prisma.letter.groupBy({ 
+      by: ['status'], 
+      _count: { status: true } 
+    })
+    
+    // Fetch DLQ count
+    dlqCount = await prisma.failedLetter.count({ 
+      where: { resolved: false } 
+    })
+    
+    // Fetch circuit breaker states
+    circuitStates = await prisma.circuitBreakerState.findMany({ 
+      orderBy: { service: 'asc' } 
+    })
+    
+    // Fetch cron run info
+    cronRun = await prisma.cronRun.findUnique({ 
+      where: { name: 'letterProcessor' } 
+    })
+    
+    // Fetch recent failures
+    recentFailures = await prisma.failedLetter.findMany({
+      where: { resolved: false },
+      orderBy: { lastAttemptAt: 'desc' },
+      take: 10,
+      include: {
+        letter: {
+          include: {
+            order: true,
           },
         },
-      }),
-    ])
+      },
+    })
   } catch (e: any) {
-    console.error('Dashboard data fetch error:', e)
-    error = e.message || 'Failed to fetch dashboard data'
+    console.error('Dashboard error:', e)
+    hasError = true
+    errorMessage = e.message || 'Database error - migrations may be pending'
   }
 
   const statusMap = LETTER_STATUSES.reduce((acc, status) => {
@@ -88,13 +103,6 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-          <p className="font-semibold">Dashboard Error</p>
-          <p className="text-sm">{error}</p>
-          <p className="mt-2 text-xs text-red-500">This usually means the database migrations haven't run yet.</p>
-        </div>
-      )}
       <AutoRefresh intervalMs={30000} />
       <div className="mx-auto max-w-6xl space-y-10">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -103,9 +111,19 @@ export default async function DashboardPage() {
             <h1 className="text-3xl font-semibold tracking-tight">Operations Dashboard</h1>
           </div>
           <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 shadow-sm">
-            Updated: {formatTimestamp(now)}
+            Updated: {now.toISOString()}
           </div>
         </header>
+
+        {hasError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            <p className="font-semibold">Dashboard Error</p>
+            <p className="text-sm">{errorMessage}</p>
+            <p className="mt-2 text-xs text-red-500">
+              Check that database migrations have run: npx prisma migrate deploy
+            </p>
+          </div>
+        )}
 
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -167,9 +185,9 @@ export default async function DashboardPage() {
                   ) : (
                     recentFailures.map((failure) => (
                       <tr key={failure.id} className="text-slate-700">
-                        <td className="py-3">{failure.letterId}</td>
-                        <td className="py-3">{failure.letter?.orderId || '—'}</td>
-                        <td className="py-3">{failure.error}</td>
+                        <td className="py-3">{failure.letterId.slice(-8)}</td>
+                        <td className="py-3">{failure.letter?.orderId?.slice(-8) || '—'}</td>
+                        <td className="py-3 max-w-xs truncate">{failure.error}</td>
                         <td className="py-3">{formatTimestamp(failure.lastAttemptAt)}</td>
                       </tr>
                     ))
@@ -189,13 +207,20 @@ export default async function DashboardPage() {
                 circuitStates.map((state) => (
                   <div key={state.id} className="rounded-xl border border-slate-100 px-3 py-2">
                     <p className="text-xs uppercase text-slate-500">{state.service}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{state.state}</p>
+                    <p className={`mt-1 text-sm font-semibold ${
+                      state.state === 'OPEN' ? 'text-red-600' : 
+                      state.state === 'HALF_OPEN' ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {state.state}
+                    </p>
                     <p className="mt-1 text-xs text-slate-500">
                       Failures: {state.failureCount}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Opened: {formatTimestamp(state.openedAt)}
-                    </p>
+                    {state.openedAt && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Opened: {formatTimestamp(state.openedAt)}
+                      </p>
+                    )}
                   </div>
                 ))
               )}
