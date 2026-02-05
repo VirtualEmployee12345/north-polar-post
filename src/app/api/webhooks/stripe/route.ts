@@ -4,11 +4,13 @@ import prisma from '@/lib/prisma'
 import { LetterStatus, Order } from '@prisma/client'
 import { headers } from 'next/headers'
 import { sendLateOrderNotification, sendOrderConfirmation } from '@/services/email'
+import { createLogger } from '@/lib/logger'
 
 // Force dynamic to prevent static generation issues
 export const dynamic = 'force-dynamic'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const logger = createLogger('stripe-webhook')
 
 // Letter templates from the manifest
 const letterTemplates = {
@@ -101,7 +103,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(payload, signature, webhookSecret)
     } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message)
+      logger.error('Webhook signature verification failed', { error: err?.message })
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
       const { childName, city, goodDeed, specialWish } = session.metadata || {}
       
       if (!childName || !city || !goodDeed || !specialWish) {
-        console.error('Missing metadata in checkout session')
+        logger.error('Missing metadata in checkout session', { sessionId: session.id })
         return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
       }
 
@@ -211,11 +213,14 @@ export async function POST(request: Request) {
           }
 
           createdOrder = order
-          console.log(`Order ${order.id} created with ${letters.length} scheduled letters`)
+          logger.info('Order created with scheduled letters', {
+            orderId: order.id,
+            letters: letters.length,
+          })
         })
       } catch (error: any) {
         if (error?.code === 'P2002') {
-          console.log(`Duplicate checkout session ignored: ${session.id}`)
+          logger.info('Duplicate checkout session ignored', { sessionId: session.id })
           return NextResponse.json({ received: true, duplicate: true })
         }
         throw error
@@ -252,7 +257,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Stripe webhook error:', error)
+    logger.error('Stripe webhook error', { error })
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

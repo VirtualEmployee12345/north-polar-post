@@ -1,5 +1,7 @@
 // Handwrytten API client with retry logic
 // Documentation: https://www.handwrytten.com/api/documentation
+import { createLogger } from '@/lib/logger'
+import { runWithCircuitBreaker } from '@/services/circuitBreaker'
 
 interface HandwryttenAddress {
   first_name?: string
@@ -33,6 +35,10 @@ interface HandwryttenCardResponse {
 const HANDWRYTTEN_API_BASE = 'https://api.handwrytten.com/v1'
 const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 2000
+const CIRCUIT_CREATE = 'handwrytten:cards:create'
+const CIRCUIT_STATUS = 'handwrytten:cards:status'
+
+const logger = createLogger('handwrytten-client')
 
 class HandwryttenClient {
   private apiKey: string
@@ -72,7 +78,12 @@ class HandwryttenClient {
       // If rate limited or server error, retry
       if ((response.status === 429 || response.status >= 500) && attempt < MAX_RETRIES) {
         const delay = RETRY_DELAY_MS * attempt
-        console.log(`Handwrytten API error ${response.status}, retrying in ${delay}ms (attempt ${attempt}/${MAX_RETRIES})...`)
+        logger.warn('Handwrytten API error, retrying', {
+          status: response.status,
+          delayMs: delay,
+          attempt,
+          maxRetries: MAX_RETRIES,
+        })
         await this.sleep(delay)
         return this.fetchWithRetry(url, options, attempt + 1)
       }
@@ -81,7 +92,11 @@ class HandwryttenClient {
     } catch (error) {
       if (attempt < MAX_RETRIES) {
         const delay = RETRY_DELAY_MS * attempt
-        console.log(`Handwrytten API network error, retrying in ${delay}ms (attempt ${attempt}/${MAX_RETRIES})...`)
+        logger.warn('Handwrytten API network error, retrying', {
+          delayMs: delay,
+          attempt,
+          maxRetries: MAX_RETRIES,
+        })
         await this.sleep(delay)
         return this.fetchWithRetry(url, options, attempt + 1)
       }
@@ -125,22 +140,22 @@ class HandwryttenClient {
         ink_color: 'black',
       }
 
-      const response = await this.fetchWithRetry(
-        `${HANDWRYTTEN_API_BASE}/cards`,
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
+      const response = await runWithCircuitBreaker(CIRCUIT_CREATE, async () => {
+        const result = await this.fetchWithRetry(
+          `${HANDWRYTTEN_API_BASE}/cards`,
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          }
+        )
+        if (!result.ok) {
+          const data = await result.json().catch(() => ({} as any))
+          throw new Error(data.message || `HTTP ${result.status}: ${result.statusText}`)
         }
-      )
+        return result
+      })
 
       const data = await response.json()
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.message || `HTTP ${response.status}: ${response.statusText}`,
-        }
-      }
 
       return {
         success: true,
@@ -150,7 +165,7 @@ class HandwryttenClient {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error('Handwrytten API error:', errorMessage)
+      logger.error('Handwrytten API error', { error: errorMessage })
       return {
         success: false,
         error: errorMessage,
@@ -160,19 +175,19 @@ class HandwryttenClient {
 
   async getCardStatus(cardId: string): Promise<HandwryttenCardResponse> {
     try {
-      const response = await this.fetchWithRetry(
-        `${HANDWRYTTEN_API_BASE}/cards/${cardId}`,
-        { method: 'GET' }
-      )
+      const response = await runWithCircuitBreaker(CIRCUIT_STATUS, async () => {
+        const result = await this.fetchWithRetry(
+          `${HANDWRYTTEN_API_BASE}/cards/${cardId}`,
+          { method: 'GET' }
+        )
+        if (!result.ok) {
+          const data = await result.json().catch(() => ({} as any))
+          throw new Error(data.message || `HTTP ${result.status}: ${result.statusText}`)
+        }
+        return result
+      })
 
       const data = await response.json()
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.message || `HTTP ${response.status}: ${response.statusText}`,
-        }
-      }
 
       return {
         success: true,
@@ -181,6 +196,7 @@ class HandwryttenClient {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      logger.error('Handwrytten status error', { error: errorMessage })
       return {
         success: false,
         error: errorMessage,

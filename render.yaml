@@ -28,6 +28,16 @@ services:
         sync: false
       - key: DLQ_ALERT_EMAIL
         sync: false
+      - key: ALERT_EMAIL
+        sync: false
+      - key: CIRCUIT_BREAKER_THRESHOLD
+        value: "5"
+      - key: CIRCUIT_BREAKER_WINDOW_MS
+        value: "600000"
+      - key: CIRCUIT_BREAKER_COOLDOWN_MS
+        value: "1800000"
+      - key: SENTRY_DSN
+        sync: false
     healthCheckPath: /
 
   - type: worker
@@ -54,6 +64,16 @@ services:
       - key: RESEND_FROM
         sync: false
       - key: DLQ_ALERT_EMAIL
+        sync: false
+      - key: ALERT_EMAIL
+        sync: false
+      - key: CIRCUIT_BREAKER_THRESHOLD
+        value: "5"
+      - key: CIRCUIT_BREAKER_WINDOW_MS
+        value: "600000"
+      - key: CIRCUIT_BREAKER_COOLDOWN_MS
+        value: "1800000"
+      - key: SENTRY_DSN
         sync: false
 
 databases:

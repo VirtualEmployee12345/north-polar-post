@@ -86,3 +86,18 @@ export async function sendDlqAlert(letterId, error) {
     text: `Letter ${letterId} failed after retries and was moved to the DLQ.\n\nError: ${error}`,
   })
 }
+
+export async function sendCircuitBreakerAlert(service, state) {
+  const alertTo = process.env.ALERT_EMAIL || process.env.DLQ_ALERT_EMAIL
+  if (!alertTo) {
+    console.warn('Circuit breaker alert skipped: missing ALERT_EMAIL or DLQ_ALERT_EMAIL')
+    return { ok: false, skipped: true }
+  }
+
+  const readableState = state === 'OPEN' ? 'OPEN' : 'CLOSED'
+  return sendEmail({
+    to: alertTo,
+    subject: `Circuit breaker ${readableState}: ${service}`,
+    text: `Circuit breaker for ${service} is now ${readableState}.\n\nTimestamp: ${new Date().toISOString()}`,
+  })
+}

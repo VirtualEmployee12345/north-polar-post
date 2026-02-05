@@ -2,9 +2,19 @@ import cron from 'node-cron'
 import prisma from '../lib/prisma'
 import { sendLetterWithRetry } from '../services/handwrytten'
 import { sendLetterShippedNotification } from '../services/email'
+import { createLogger } from '../lib/logger'
+
+const logger = createLogger('letter-processor')
 
 async function processDueLetters() {
-  console.log('📬 Running daily letter processor...')
+  const runAt = new Date()
+  await prisma.cronRun.upsert({
+    where: { name: 'letterProcessor' },
+    create: { name: 'letterProcessor', lastRunAt: runAt },
+    update: { lastRunAt: runAt },
+  })
+
+  logger.info('Running daily letter processor', { runAt: runAt.toISOString() })
 
   const endOfToday = new Date()
   endOfToday.setHours(23, 59, 59, 999)
@@ -24,7 +34,7 @@ async function processDueLetters() {
     },
   })
 
-  console.log(`Found ${letters.length} pending letters ready to queue.`)
+  logger.info('Pending letters ready to queue', { count: letters.length })
 
   for (const letter of letters) {
     const updated = await prisma.letter.updateMany({
@@ -36,7 +46,7 @@ async function processDueLetters() {
       continue
     }
 
-    console.log(`Queued letter ${letter.id} (sequence ${letter.sequenceNumber})`)
+    logger.info('Queued letter', { letterId: letter.id, sequence: letter.sequenceNumber })
 
     const result = await sendLetterWithRetry(letter, letter.order)
 
@@ -67,11 +77,11 @@ function startScheduler() {
     try {
       await processDueLetters()
     } catch (error) {
-      console.error('Letter processor error:', error)
+      logger.error('Letter processor error', { error })
     }
   })
 
-  console.log(`Letter processor scheduled with: ${schedule}`)
+  logger.info('Letter processor scheduled', { schedule })
 }
 
 async function bootstrap() {
@@ -80,6 +90,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch(error => {
-  console.error('Failed to start letter processor:', error)
+  logger.error('Failed to start letter processor', { error })
   process.exit(1)
 })
