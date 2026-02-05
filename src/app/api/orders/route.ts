@@ -88,7 +88,7 @@ export async function GET(request: Request) {
         orderDate: formatDate(order.createdAt),
         total: `$${order.amount.toFixed(2)}`,
         status: order.status,
-        letters: order.letters.map((letter, idx) => ({
+        letters: order.letters.map((letter: { sequenceNumber: number; sendDate: Date; status: string }, idx: number) => ({
           sequenceNumber: letter.sequenceNumber,
           scheduledDate: getLetterDisplayDate(letter.sendDate, idx),
           status: letter.status

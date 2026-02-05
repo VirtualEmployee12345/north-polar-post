@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
+import { LetterStatus, Order } from '@prisma/client'
 import { headers } from 'next/headers'
 import { sendLateOrderNotification, sendOrderConfirmation } from '@/services/email'
 
@@ -143,7 +144,7 @@ export async function POST(request: Request) {
       }))
 
       // Create order and letters in a transaction
-      let createdOrder = null
+      let createdOrder: Order | null = null
 
       try {
         await prisma.$transaction(async (tx) => {
@@ -180,7 +181,7 @@ export async function POST(request: Request) {
               letters.push({
                 orderId: order.id,
                 sequenceNumber: 1,
-                status: 'PENDING',
+                status: LetterStatus.PENDING,
                 sendDate: schedule.sendDate,
                 content: letterTemplates[1](childName, city, specialWish),
               })
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
               letters.push({
                 orderId: order.id,
                 sequenceNumber: 2,
-                status: 'PENDING',
+                status: LetterStatus.PENDING,
                 sendDate: schedule.sendDate,
                 content: letterTemplates[2](childName, city, goodDeed),
               })
@@ -198,7 +199,7 @@ export async function POST(request: Request) {
               letters.push({
                 orderId: order.id,
                 sequenceNumber: 3,
-                status: 'PENDING',
+                status: LetterStatus.PENDING,
                 sendDate: schedule.sendDate,
                 content: letterTemplates[3](childName, city),
               })
@@ -221,8 +222,13 @@ export async function POST(request: Request) {
       }
 
       if (createdOrder) {
+        const order = createdOrder as Order
         await sendOrderConfirmation({
-          ...createdOrder,
+          id: order.id,
+          childName: order.childName,
+          city: order.city,
+          email: order.email,
+          amount: order.amount,
           adjustedSchedule: adjustedScheduleJson,
         })
 
