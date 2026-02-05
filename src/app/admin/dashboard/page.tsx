@@ -30,36 +30,52 @@ export default async function DashboardPage() {
   const todayStart = startOfToday(now)
   const weekStart = startOfWeek(now)
 
-  const [
-    ordersToday,
-    ordersWeek,
-    ordersAll,
-    letterGroups,
-    dlqCount,
-    circuitStates,
-    cronRun,
-    recentFailures,
-  ] = await Promise.all([
-    prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.order.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.order.count(),
-    prisma.letter.groupBy({ by: ['status'], _count: { status: true } }),
-    prisma.failedLetter.count({ where: { resolved: false } }),
-    prisma.circuitBreakerState.findMany({ orderBy: { service: 'asc' } }),
-    prisma.cronRun.findUnique({ where: { name: 'letterProcessor' } }),
-    prisma.failedLetter.findMany({
-      where: { resolved: false },
-      orderBy: { lastAttemptAt: 'desc' },
-      take: 10,
-      include: {
-        letter: {
-          include: {
-            order: true,
+  // Wrap queries in try/catch to handle missing tables gracefully
+  let ordersToday = 0
+  let ordersWeek = 0
+  let ordersAll = 0
+  let letterGroups: any[] = []
+  let dlqCount = 0
+  let circuitStates: any[] = []
+  let cronRun: any = null
+  let recentFailures: any[] = []
+  let error: string | null = null
+
+  try {
+    ;[
+      ordersToday,
+      ordersWeek,
+      ordersAll,
+      letterGroups,
+      dlqCount,
+      circuitStates,
+      cronRun,
+      recentFailures,
+    ] = await Promise.all([
+      prisma.order.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.order.count({ where: { createdAt: { gte: weekStart } } }),
+      prisma.order.count(),
+      prisma.letter.groupBy({ by: ['status'], _count: { status: true } }),
+      prisma.failedLetter.count({ where: { resolved: false } }),
+      prisma.circuitBreakerState.findMany({ orderBy: { service: 'asc' } }),
+      prisma.cronRun.findUnique({ where: { name: 'letterProcessor' } }),
+      prisma.failedLetter.findMany({
+        where: { resolved: false },
+        orderBy: { lastAttemptAt: 'desc' },
+        take: 10,
+        include: {
+          letter: {
+            include: {
+              order: true,
+            },
           },
         },
-      },
-    }),
-  ])
+      }),
+    ])
+  } catch (e: any) {
+    console.error('Dashboard data fetch error:', e)
+    error = e.message || 'Failed to fetch dashboard data'
+  }
 
   const statusMap = LETTER_STATUSES.reduce((acc, status) => {
     acc[status] = 0
@@ -72,6 +88,13 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <p className="font-semibold">Dashboard Error</p>
+          <p className="text-sm">{error}</p>
+          <p className="mt-2 text-xs text-red-500">This usually means the database migrations haven't run yet.</p>
+        </div>
+      )}
       <AutoRefresh intervalMs={30000} />
       <div className="mx-auto max-w-6xl space-y-10">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
