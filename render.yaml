@@ -22,18 +22,25 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: DLQ_ALERT_EMAIL
+        sync: false
     healthCheckPath: /
 
-  - type: cron
+  - type: worker
     name: north-polar-post-scheduler
     runtime: node
     plan: starter
     buildCommand: npm install && npm run build
     startCommand: npm run start:cron
-    schedule: 0 8 * * *
     envVars:
       - key: NODE_ENV
         value: production
+      - key: LETTER_CRON_SCHEDULE
+        value: 0 8 * * *
       - key: DATABASE_URL
         fromDatabase:
           name: north-polar-post-db
@@ -41,6 +48,12 @@ services:
       - key: HANDWRYTTEN_API_KEY
         sync: false
       - key: HANDWRYTTEN_STATIONERY_ID
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: DLQ_ALERT_EMAIL
         sync: false
 
 databases:

@@ -90,7 +90,7 @@ export async function GET(request: Request) {
         status: order.status,
         letters: order.letters.map((letter, idx) => ({
           sequenceNumber: letter.sequenceNumber,
-          scheduledDate: getLetterDisplayDate(letter.scheduledDate, idx),
+          scheduledDate: getLetterDisplayDate(letter.sendDate, idx),
           status: letter.status
         }))
       }

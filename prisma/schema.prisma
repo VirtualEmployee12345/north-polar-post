@@ -18,9 +18,9 @@ enum OrderStatus {
 
 enum LetterStatus {
   PENDING
-  SCHEDULED
+  QUEUED
+  SENDING
   SENT
-  DELIVERED
   FAILED
 }
 
@@ -29,6 +29,7 @@ model Order {
   stripeCheckoutSessionId String   @unique
   stripePaymentIntentId String?
   status                  OrderStatus @default(PENDING)
+  email                   String?
   
   // Child details (from form)
   childName               String
@@ -46,6 +47,10 @@ model Order {
   // Timestamps
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
+
+  // Schedule tracking
+  originalSchedule        Json?
+  adjustedSchedule        Json?
   
   // Relations
   letters                 Letter[]
@@ -56,7 +61,7 @@ model Letter {
   orderId             String
   sequenceNumber      Int          // 1, 2, or 3
   status              LetterStatus @default(PENDING)
-  scheduledDate       DateTime
+  sendDate            DateTime
   sentDate            DateTime?
   handwryttenCardId   String?
   content             String       @db.Text // Full letter prose with variables
@@ -69,5 +74,26 @@ model Letter {
   order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   @@index([orderId])
-  @@index([status, scheduledDate])
+  @@index([status, sendDate])
+}
+
+model ProcessedStripeSession {
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  createdAt DateTime @default(now())
+}
+
+model FailedLetter {
+  id            String   @id @default(uuid())
+  letterId      String   @unique
+  error         String
+  attempts      Json
+  lastAttemptAt DateTime
+  resolved      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  letter        Letter   @relation(fields: [letterId], references: [id], onDelete: Cascade)
+
+  @@index([resolved, lastAttemptAt])
 }

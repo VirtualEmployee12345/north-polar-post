@@ -2,31 +2,28 @@
 // Queries letters scheduled for today and sends them via Handwrytten API
 
 import prisma from '../lib/prisma'
-import { getHandwryttenClient } from '../lib/handwrytten'
+import { sendLetterWithRetry } from '../services/handwrytten'
+import { sendLetterShippedNotification } from '../services/email'
 
 async function sendScheduledLetters() {
   console.log('🔍 Checking for letters scheduled to send today...')
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const endOfToday = new Date()
+  endOfToday.setHours(23, 59, 59, 999)
 
   // Find letters scheduled for today that haven't been sent
   const lettersToSend = await prisma.letter.findMany({
     where: {
-      status: 'SCHEDULED',
-      scheduledDate: {
-        gte: today,
-        lt: tomorrow,
+      status: 'PENDING',
+      sendDate: {
+        lte: endOfToday,
       },
     },
     include: {
       order: true,
     },
     orderBy: {
-      scheduledDate: 'asc',
+      sendDate: 'asc',
     },
   })
 
@@ -37,7 +34,6 @@ async function sendScheduledLetters() {
     return
   }
 
-  const handwrytten = getHandwryttenClient()
   let successCount = 0
   let failureCount = 0
 
@@ -59,35 +55,13 @@ async function sendScheduledLetters() {
 
       console.log(`📝 Sending letter ${letter.sequenceNumber} for ${order.childName}...`)
 
-      // Send via Handwrytten
-      const result = await handwrytten.sendCard(letter.content, {
-        childName: order.childName,
-        line1: shipping.line1,
-        line2: shipping.line2,
-        city: shipping.city,
-        state: shipping.state,
-        postalCode: shipping.postalCode,
-        country: shipping.country || 'US',
-      })
+      const result = await sendLetterWithRetry(letter, order)
 
-      if (result.success && result.card_id) {
-        // Update letter as sent
-        await prisma.letter.update({
-          where: { id: letter.id },
-          data: {
-            status: 'SENT',
-            sentDate: new Date(),
-            handwryttenCardId: result.card_id,
-          },
-        })
-        console.log(`✅ Letter ${letter.id} sent successfully (Handwrytten ID: ${result.card_id})`)
+      if (result.success) {
+        await sendLetterShippedNotification(order, letter)
+        console.log(`✅ Letter ${letter.id} sent successfully`)
         successCount++
       } else {
-        // Mark as failed
-        await prisma.letter.update({
-          where: { id: letter.id },
-          data: { status: 'FAILED' },
-        })
         console.error(`❌ Failed to send letter ${letter.id}: ${result.error}`)
         failureCount++
       }
@@ -109,7 +83,7 @@ async function sendScheduledLetters() {
     const unsentLetters = await prisma.letter.count({
       where: {
         orderId,
-        status: { in: ['PENDING', 'SCHEDULED'] },
+        status: { in: ['PENDING', 'QUEUED', 'SENDING'] },
       },
     })
 

@@ -14,6 +14,7 @@ interface OrderDetails {
   letters: {
     sequenceNumber: number;
     scheduledDate: string;
+    status?: string;
   }[];
 }
 
@@ -146,9 +147,11 @@ const OrderConfirmationContent: React.FC = () => {
                   What Happens Next?
                 </h2>
                 <ol className="space-y-3 font-serif text-lg text-[#5c4033] list-decimal list-inside">
-                  <li>The first letter will be dispatched in early December.</li>
-                  <li>The second letter will follow in mid-December.</li>
-                  <li>The final letter and certificate will arrive just before Christmas Eve.</li>
+                  {order.letters.map((letter) => (
+                    <li key={letter.sequenceNumber}>
+                      Letter {letter.sequenceNumber} is planned for {letter.scheduledDate}.
+                    </li>
+                  ))}
                 </ol>
               </div>
 

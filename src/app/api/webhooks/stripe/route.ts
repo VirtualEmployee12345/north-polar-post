@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import prisma from '@/lib/prisma'
 import { headers } from 'next/headers'
+import { sendLateOrderNotification, sendOrderConfirmation } from '@/services/email'
 
 // Force dynamic to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -46,18 +47,43 @@ Yours truly,
 Father Christmas`,
 }
 
-function calculateLetterDates(orderDate: Date): Date[] {
-  // Check if after Dec 10 - compress schedule
-  const dec10 = new Date(orderDate.getFullYear(), 11, 10) // Month is 0-indexed
-  const isLateOrder = orderDate > dec10
-  
-  const intervalDays = isLateOrder ? 3 : 7
-  
+function addDays(base: Date, days: number): Date {
+  const next = new Date(base)
+  next.setDate(next.getDate() + days)
+  return next
+}
+
+function buildSchedule(orderDate: Date, intervalDays: number) {
   return [
-    new Date(orderDate.getTime() + intervalDays * 24 * 60 * 60 * 1000),      // Letter 1
-    new Date(orderDate.getTime() + intervalDays * 2 * 24 * 60 * 60 * 1000),   // Letter 2
-    new Date(orderDate.getTime() + intervalDays * 3 * 24 * 60 * 60 * 1000),   // Letter 3
+    { sequence: 1, sendDate: addDays(orderDate, intervalDays) },
+    { sequence: 2, sendDate: addDays(orderDate, intervalDays * 2) },
+    { sequence: 3, sendDate: addDays(orderDate, intervalDays * 3) },
   ]
+}
+
+function calculateSchedules(orderDate: Date) {
+  const dec10 = new Date(orderDate.getFullYear(), 11, 10)
+  const dec20 = new Date(orderDate.getFullYear(), 11, 20)
+
+  const originalSchedule = buildSchedule(orderDate, 7)
+  let adjustedSchedule = originalSchedule
+  let sequencesToSend = [1, 2, 3]
+  let lateType: 'after_dec_10' | 'after_dec_20' | null = null
+
+  if (orderDate > dec20) {
+    adjustedSchedule = [{ sequence: 3, sendDate: addDays(orderDate, 3) }]
+    sequencesToSend = [3]
+    lateType = 'after_dec_20'
+  } else if (orderDate > dec10) {
+    adjustedSchedule = [
+      { sequence: 2, sendDate: addDays(orderDate, 3) },
+      { sequence: 3, sendDate: addDays(orderDate, 6) },
+    ]
+    sequencesToSend = [2, 3]
+    lateType = 'after_dec_10'
+  }
+
+  return { originalSchedule, adjustedSchedule, sequencesToSend, lateType }
 }
 
 export async function POST(request: Request) {
@@ -103,57 +129,107 @@ export async function POST(request: Request) {
         country: shipping.address.country,
       } : null
 
-      // Calculate letter dates
       const orderDate = new Date()
-      const letterDates = calculateLetterDates(orderDate)
+      const { originalSchedule, adjustedSchedule, sequencesToSend, lateType } = calculateSchedules(orderDate)
+      const email = sessionData.customer_details?.email || sessionData.customer_email || null
+
+      const adjustedScheduleJson = adjustedSchedule.map(item => ({
+        sequence: item.sequence,
+        sendDate: item.sendDate.toISOString(),
+      }))
+      const originalScheduleJson = originalSchedule.map(item => ({
+        sequence: item.sequence,
+        sendDate: item.sendDate.toISOString(),
+      }))
 
       // Create order and letters in a transaction
-      await prisma.$transaction(async (tx) => {
-        // Create the order
-        const order = await tx.order.create({
-          data: {
-            stripeCheckoutSessionId: session.id,
-            stripePaymentIntentId: session.payment_intent as string || null,
-            status: 'PAID',
-            childName,
-            city,
-            goodDeed,
-            specialWish,
-            shippingAddress: shippingAddress as any,
-            amount: 39.99,
-            currency: 'USD',
-          },
+      let createdOrder = null
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          const processed = await tx.processedStripeSession.create({
+            data: { sessionId: session.id },
+          })
+
+          if (!processed) {
+            return
+          }
+
+          const order = await tx.order.create({
+            data: {
+              stripeCheckoutSessionId: session.id,
+              stripePaymentIntentId: session.payment_intent as string || null,
+              status: 'PAID',
+              childName,
+              city,
+              goodDeed,
+              specialWish,
+              email,
+              shippingAddress: shippingAddress as any,
+              amount: 39.99,
+              currency: 'USD',
+              originalSchedule: originalScheduleJson as any,
+              adjustedSchedule: adjustedScheduleJson as any,
+            },
+          })
+
+          const letters = []
+          for (const schedule of adjustedSchedule) {
+            if (!sequencesToSend.includes(schedule.sequence)) continue
+            if (schedule.sequence === 1) {
+              letters.push({
+                orderId: order.id,
+                sequenceNumber: 1,
+                status: 'PENDING',
+                sendDate: schedule.sendDate,
+                content: letterTemplates[1](childName, city, specialWish),
+              })
+            }
+            if (schedule.sequence === 2) {
+              letters.push({
+                orderId: order.id,
+                sequenceNumber: 2,
+                status: 'PENDING',
+                sendDate: schedule.sendDate,
+                content: letterTemplates[2](childName, city, goodDeed),
+              })
+            }
+            if (schedule.sequence === 3) {
+              letters.push({
+                orderId: order.id,
+                sequenceNumber: 3,
+                status: 'PENDING',
+                sendDate: schedule.sendDate,
+                content: letterTemplates[3](childName, city),
+              })
+            }
+          }
+
+          if (letters.length > 0) {
+            await tx.letter.createMany({ data: letters })
+          }
+
+          createdOrder = order
+          console.log(`Order ${order.id} created with ${letters.length} scheduled letters`)
+        })
+      } catch (error: any) {
+        if (error?.code === 'P2002') {
+          console.log(`Duplicate checkout session ignored: ${session.id}`)
+          return NextResponse.json({ received: true, duplicate: true })
+        }
+        throw error
+      }
+
+      if (createdOrder) {
+        await sendOrderConfirmation({
+          ...createdOrder,
+          adjustedSchedule: adjustedScheduleJson,
         })
 
-        // Create the three letters
-        await tx.letter.createMany({
-          data: [
-            {
-              orderId: order.id,
-              sequenceNumber: 1,
-              status: 'SCHEDULED',
-              scheduledDate: letterDates[0],
-              content: letterTemplates[1](childName, city, specialWish),
-            },
-            {
-              orderId: order.id,
-              sequenceNumber: 2,
-              status: 'SCHEDULED',
-              scheduledDate: letterDates[1],
-              content: letterTemplates[2](childName, city, goodDeed),
-            },
-            {
-              orderId: order.id,
-              sequenceNumber: 3,
-              status: 'SCHEDULED',
-              scheduledDate: letterDates[2],
-              content: letterTemplates[3](childName, city),
-            },
-          ],
-        })
-
-        console.log(`Order ${order.id} created with 3 scheduled letters`)
-      })
+        if (lateType) {
+          await sendLateOrderNotification(createdOrder, lateType)
+        }
+      }
     }
 
     // Handle payment failures
