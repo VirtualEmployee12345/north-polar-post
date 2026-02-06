@@ -1,3 +1,4 @@
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
@@ -9,22 +10,32 @@ function getPrismaClient(): PrismaClient {
     return globalForPrisma.prisma
   }
 
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = process.env.DATABASE_URL
+  
+  if (!databaseUrl) {
     console.error('[Prisma] DATABASE_URL not set. Available envs:', 
-      Object.keys(process.env).filter(k => k.includes('DB') || k.includes('URL') || k.includes('DATA')))
+      Object.keys(process.env).filter(k => k.toLowerCase().includes('db') || k.toLowerCase().includes('url')))
     throw new Error('DATABASE_URL environment variable is not set')
   }
 
-  console.log('[Prisma] Creating client with DATABASE_URL length:', process.env.DATABASE_URL.length)
+  console.log('[Prisma] Creating client with adapter, DATABASE_URL length:', databaseUrl.length)
 
-  // Prisma 7: No special config needed - reads DATABASE_URL automatically
-  const client = new PrismaClient()
-  
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = client
+  // Prisma 7: Use driver adapter for PostgreSQL
+  try {
+    const adapter = new PrismaPg({ connectionString: databaseUrl })
+    const client = new PrismaClient({ adapter })
+    
+    console.log('[Prisma] Client created with PrismaPg adapter')
+    
+    if (process.env.NODE_ENV !== 'production') {
+      globalForPrisma.prisma = client
+    }
+    
+    return client
+  } catch (error: any) {
+    console.error('[Prisma] Error creating client with adapter:', error.message)
+    throw error
   }
-  
-  return client
 }
 
 export const prisma = new Proxy({} as PrismaClient, {
