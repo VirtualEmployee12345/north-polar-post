@@ -12,8 +12,8 @@ const Testimonials: React.FC = () => {
             className="w-full h-auto"
           />
           <h2 
-            className="absolute inset-0 flex items-center justify-center font-serif text-2xl md:text-3xl font-bold text-[#3d2914] drop-shadow-lg"
-            style={{ fontFamily: 'var(--font-playfair)', textShadow: '2px 2px 4px rgba(255,255,255,0.8)' }}
+            className="absolute inset-0 flex items-center justify-center text-[clamp(1.5rem,4vw,2.5rem)] font-bold text-[#2A221B] drop-shadow-lg px-8 text-center"
+            style={{ fontFamily: 'var(--font-cormorant)', textShadow: '2px 2px 4px rgba(255,255,255,0.9)' }}
           >
             What Parents Are Saying
           </h2>
@@ -23,18 +23,7 @@ const Testimonials: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-6 md:grid-cols-3">
           {/* Testimonial 1 */}
-          <div className="relative bg-[#f4e4c1] border-2 border-[#d4b896] p-6 shadow-lg"
-               style={{
-                 backgroundImage: `
-                   repeating-linear-gradient(
-                     transparent,
-                     transparent 31px,
-                     rgba(139, 107, 71, 0.05) 31px,
-                     rgba(139, 107, 71, 0.05) 32px
-                   )
-                 `,
-                 boxShadow: '4px 4px 0 rgba(139, 107, 71, 0.2), inset 0 0 20px rgba(139, 107, 71, 0.1)'
-               }}>
+          <div className="parchment-card p-6 rounded-sm">
             <div className="flex gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <svg key={i} className="w-5 h-5 text-amber-500 fill-current" viewBox="0 0 20 20">
@@ -42,27 +31,16 @@ const Testimonials: React.FC = () => {
                 </svg>
               ))}
             </div>
-            <p className="text-[#3d2914] font-serif leading-relaxed">
+            <p className="text-[#2A221B] leading-relaxed" style={{ fontFamily: 'var(--font-lora)' }}>
               "Pure magic! My daughter was mesmerized. The detail is incredible."
             </p>
-            <p className="mt-4 text-[#5c4033] font-serif italic">
-              - Sarah M.
+            <p className="mt-4 text-[#5c4033] italic" style={{ fontFamily: 'var(--font-cormorant)' }}>
+              — Sarah M.
             </p>
           </div>
 
           {/* Testimonial 2 */}
-          <div className="relative bg-[#f4e4c1] border-2 border-[#d4b896] p-6 shadow-lg"
-               style={{
-                 backgroundImage: `
-                   repeating-linear-gradient(
-                     transparent,
-                     transparent 31px,
-                     rgba(139, 107, 71, 0.05) 31px,
-                     rgba(139, 107, 71, 0.05) 32px
-                   )
-                 `,
-                 boxShadow: '4px 4px 0 rgba(139, 107, 71, 0.2), inset 0 0 20px rgba(139, 107, 71, 0.1)'
-               }}>
+          <div className="parchment-card p-6 rounded-sm">
             <div className="flex gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <svg key={i} className="w-5 h-5 text-amber-500 fill-current" viewBox="0 0 20 20">
@@ -70,27 +48,16 @@ const Testimonials: React.FC = () => {
                 </svg>
               ))}
             </div>
-            <p className="text-[#3d2914] font-serif leading-relaxed">
+            <p className="text-[#2A221B] leading-relaxed" style={{ fontFamily: 'var(--font-lora)' }}>
               "The highlight of our December. So much better than a simple printout."
             </p>
-            <p className="mt-4 text-[#5c4033] font-serif italic">
-              - David K.
+            <p className="mt-4 text-[#5c4033] italic" style={{ fontFamily: 'var(--font-cormorant)' }}>
+              — David K.
             </p>
           </div>
 
           {/* Testimonial 3 */}
-          <div className="relative bg-[#f4e4c1] border-2 border-[#d4b896] p-6 shadow-lg"
-               style={{
-                 backgroundImage: `
-                   repeating-linear-gradient(
-                     transparent,
-                     transparent 31px,
-                     rgba(139, 107, 71, 0.05) 31px,
-                     rgba(139, 107, 71, 0.05) 32px
-                   )
-                 `,
-                 boxShadow: '4px 4px 0 rgba(139, 107, 71, 0.2), inset 0 0 20px rgba(139, 107, 71, 0.1)'
-               }}>
+          <div className="parchment-card p-6 rounded-sm">
             <div className="flex gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <svg key={i} className="w-5 h-5 text-amber-500 fill-current" viewBox="0 0 20 20">
@@ -98,11 +65,11 @@ const Testimonials: React.FC = () => {
                 </svg>
               ))}
             </div>
-            <p className="text-[#3d2914] font-serif leading-relaxed">
+            <p className="text-[#2A221B] leading-relaxed" style={{ fontFamily: 'var(--font-lora)' }}>
               "Worth every penny for the wonder in his eyes. A new tradition."
             </p>
-            <p className="mt-4 text-[#5c4033] font-serif italic">
-              - Emily R.
+            <p className="mt-4 text-[#5c4033] italic" style={{ fontFamily: 'var(--font-cormorant)' }}>
+              — Emily R.
             </p>
           </div>
         </div>

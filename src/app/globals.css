@@ -3,13 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --font-playfair: 'Playfair Display', Georgia, serif;
-  --font-source-sans: 'Source Sans 3', system-ui, sans-serif;
-  --color-ink: #3d2914;
-  --color-parchment: #f5e6c8;
-  --color-parchment-dark: #e8d4a8;
-  --color-accent: #8b4513;
+  /* Typography - Tolkien Aesthetic */
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+  --font-lora: 'Lora', Georgia, serif;
+  
+  /* Color Tokens */
+  --color-parchment-base: #F8F4E3;
+  --color-parchment-aged: #EAD7B4;
+  --color-ink-stain: #2A221B;
+  --color-wax-red: #A32828;
+  --color-leather-green: #3d5c3a;
   --color-gold: #d4a853;
+  
+  /* Legacy mappings for compatibility */
+  --font-playfair: var(--font-cormorant);
+  --font-source-sans: var(--font-lora);
+  --color-ink: var(--color-ink-stain);
+  --color-parchment: var(--color-parchment-base);
+  --color-parchment-dark: var(--color-parchment-aged);
+  --color-accent: var(--color-wax-red);
 }
 
 body {
@@ -18,11 +30,12 @@ body {
   background-repeat: repeat;
   background-attachment: fixed;
   background-position: center;
-  color: var(--color-ink);
-  font-family: var(--font-source-sans);
+  color: var(--color-ink-stain);
+  font-family: var(--font-lora);
   position: relative;
   overflow-x: hidden;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 16px;
 }
 
 @media (min-width: 1024px) {
@@ -31,16 +44,25 @@ body {
   }
 }
 
-/* Typography */
+/* Typography - Tolkien Style */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-playfair);
+  font-family: var(--font-cormorant);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-ink-stain);
 }
 
-p {
-  font-family: var(--font-source-sans);
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+h2 {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+p, span, li, a {
+  font-family: var(--font-lora);
 }
 
 /* Smooth scroll */
@@ -107,4 +129,141 @@ button:focus-visible {
 ::selection {
   background: rgba(139, 69, 19, 0.3);
   color: var(--color-ink);
+}
+
+/* Wax Seal CTA Button - CSS Only */
+.wax-seal-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px 14px 56px;
+  background: linear-gradient(135deg, #4a7c45 0%, #3d5c3a 50%, #2f4a2d 100%);
+  border: none;
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 
+    0 4px 0 #1f301d,
+    0 6px 20px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  color: #fff;
+  font-family: var(--font-cormorant);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+
+.wax-seal-button::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  background: radial-gradient(circle at 30% 30%, #c44444 0%, #a32828 40%, #7a1f1f 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 2px 4px rgba(0,0,0,0.4),
+    inset 0 -2px 4px rgba(0,0,0,0.2),
+    inset 0 2px 4px rgba(255,255,255,0.1);
+}
+
+.wax-seal-button::after {
+  content: '🎅';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+.wax-seal-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 0 #1f301d,
+    0 8px 25px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.wax-seal-button:active {
+  transform: translateY(2px);
+  box-shadow: 
+    0 2px 0 #1f301d,
+    0 3px 10px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* Organic Deckled Borders */
+.deckled-border {
+  position: relative;
+  border: none;
+}
+
+.deckled-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, rgba(139,107,71,0.4) 0%, rgba(139,107,71,0.1) 50%, rgba(139,107,71,0.4) 100%);
+  clip-path: polygon(
+    2% 0%, 15% 1%, 30% 0%, 50% 2%, 70% 0%, 85% 1%, 98% 0%,
+    100% 15%, 99% 30%, 100% 50%, 99% 70%, 100% 85%, 98% 100%,
+    85% 99%, 70% 100%, 50% 98%, 30% 100%, 15% 99%, 2% 100%,
+    0% 85%, 1% 70%, 0% 50%, 1% 30%, 0% 15%
+  );
+  z-index: -1;
+}
+
+.parchment-card {
+  background: var(--color-parchment-base);
+  position: relative;
+  box-shadow: 
+    4px 4px 0 rgba(139, 107, 71, 0.2),
+    inset 0 0 30px rgba(139, 107, 71, 0.08);
+}
+
+.parchment-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: transparent;
+  border: 2px solid rgba(139, 107, 71, 0.3);
+  border-radius: 2px 8px 8px 2px;
+  clip-path: polygon(
+    1% 0%, 98% 1%, 100% 2%, 99% 98%, 98% 100%, 2% 99%, 0% 98%, 1% 2%
+  );
+  pointer-events: none;
+}
+
+/* Ledger Form Styling */
+.ledger-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px dashed rgba(139, 107, 71, 0.4);
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  color: var(--color-ink-stain);
+  padding: 8px 4px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+}
+
+.ledger-input:focus {
+  outline: none;
+  border-bottom-style: solid;
+  border-bottom-color: var(--color-wax-red);
+}
+
+.ledger-input::placeholder {
+  color: rgba(42, 34, 27, 0.4);
+  font-style: italic;
 }

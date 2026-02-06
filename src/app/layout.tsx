@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Source_Sans_3 } from "next/font/google";
+import { Cormorant_Garamond, Lora } from "next/font/google";
 import "./globals.css";
 
-const playfairDisplay = Playfair_Display({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-cormorant",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
-const sourceSans = Source_Sans_3({
+const lora = Lora({
   subsets: ["latin"],
-  variable: "--font-source-sans",
+  variable: "--font-lora",
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfairDisplay.variable} ${sourceSans.variable}`}>
+    <html lang="en" className={`${cormorantGaramond.variable} ${lora.variable}`}>
       <body className="antialiased">
         {children}
       </body>
