@@ -9,7 +9,8 @@
 
 body {
   background-image: url('/parchment-bg.png');
-  background-size: cover;
+  background-size: 800px auto;
+  background-repeat: repeat;
   background-attachment: fixed;
   background-position: center;
   color: var(--foreground);
