@@ -22,7 +22,7 @@ export async function GET() {
       status: 'attempting',
     }
     
-    const { PrismaClient } = await import('@prisma/client')
+    const { default: PrismaClient } = await import('@prisma/client')
     debug.prismaModule.status = 'success'
     debug.prismaModule.type = typeof PrismaClient
     
