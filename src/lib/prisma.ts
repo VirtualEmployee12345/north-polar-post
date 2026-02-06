@@ -4,7 +4,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Lazy creation - only instantiate when actually used
+// Lazy singleton - only create when first accessed
 function getPrismaClient(): PrismaClient {
   if (globalForPrisma.prisma) {
     return globalForPrisma.prisma
@@ -13,10 +13,16 @@ function getPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL
   
   if (!databaseUrl) {
+    console.error('DATABASE_URL not set. Env keys:', Object.keys(process.env).filter(k => k.includes('DB') || k.includes('URL')))
     throw new Error('DATABASE_URL environment variable is not set')
   }
 
-  const client = new PrismaClient()
+  // Prisma 7: use datasources.db.url configuration
+  const client = new PrismaClient({
+    datasources: {
+      db: { url: databaseUrl }
+    }
+  } as any)
   
   if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = client
@@ -25,7 +31,7 @@ function getPrismaClient(): PrismaClient {
   return client
 }
 
-// Export a proxy that lazily initializes on first use
+// Export lazy proxy that creates client on first use
 export const prisma = new Proxy({} as PrismaClient, {
   get(_, prop: string | symbol) {
     const client = getPrismaClient()
