@@ -81,4 +81,4 @@ CREATE INDEX "FailedLetter_resolved_lastAttemptAt_idx" ON "FailedLetter"("resolv
 ALTER TABLE "Letter" ADD CONSTRAINT "Letter_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FailedLetter" ADD CONSTRAINT "FailedLetter_letterId_fkey" FOREIGN KEY ("letterId") REFERENCES "Letter"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "FailedLetter" ADD CONSTRAINT "FailedLetter_letterId_fkey" FOREIGN KEY ("letterId") REFERENCES "Letter"("id") ON DELETE CASCADE ON UPDATE CASCADE;-- Deploy trigger: Fri Feb  6 07:58:49 EST 2026
