@@ -45,7 +45,7 @@ services:
     name: north-polar-post-scheduler
     runtime: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm run start:cron
     envVars:
       - key: NODE_ENV
