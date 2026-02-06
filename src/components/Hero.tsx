@@ -30,9 +30,9 @@ const HeroSection: React.FC = () => {
         {/* illustration */}
         <div className="flex-1 relative">
           <img 
-            src="/illustration.png" 
-            alt="Cozy fireplace scene with handwritten letters, a quill pen, and a warm mug of cocoa" 
-            className="w-full h-auto rounded-lg shadow-2xl"
+            src="/hero-santa-letter.png" 
+            alt="A magical vintage letter from Santa Claus, written with a fountain pen and sealed with North Pole wax, beside a candlelit window with falling snow" 
+            className="w-full h-auto drop-shadow-2xl"
           />
         </div>
       </div>
