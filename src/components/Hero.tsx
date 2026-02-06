@@ -10,9 +10,6 @@ const HeroSection: React.FC = () => {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 py-20 md:flex-row md:items-center md:gap-14">
         {/* copy */}
         <div className="flex-1">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-            The North Polar Post
-          </p>
           <h1 className="font-serif text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl lg:text-6xl">
             Give Them the Magic You Remember
           </h1>
