@@ -52,11 +52,16 @@ export default async function DashboardPage() {
     })
     ordersAll = await prisma.order.count()
     
-    // Fetch letter stats
-    letterGroups = await prisma.letter.groupBy({ 
-      by: ['status'], 
-      _count: { status: true } 
-    })
+    // Fetch letter stats (individual counts to avoid groupBy type issues)
+    const letterCounts = await Promise.all(
+      LETTER_STATUSES.map(status => 
+        prisma.letter.count({ where: { status: status as any } })
+      )
+    )
+    letterGroups = LETTER_STATUSES.map((status, i) => ({
+      status,
+      _count: { status: letterCounts[i] }
+    }))
     
     // Fetch DLQ count
     dlqCount = await prisma.failedLetter.count({ 
