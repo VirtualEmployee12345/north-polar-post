@@ -3,10 +3,24 @@ import React from 'react';
 const Testimonials: React.FC = () => {
   return (
     <section className="relative py-12 -mt-10">
+      {/* Banner Header */}
+      <div className="mx-auto max-w-4xl px-6 mb-8">
+        <div className="relative">
+          <img 
+            src="/reviews-banner.png" 
+            alt="What Parents Are Saying" 
+            className="w-full h-auto"
+          />
+          <h2 
+            className="absolute inset-0 flex items-center justify-center font-serif text-2xl md:text-3xl font-bold text-[#3d2914] drop-shadow-lg"
+            style={{ fontFamily: 'var(--font-playfair)', textShadow: '2px 2px 4px rgba(255,255,255,0.8)' }}
+          >
+            What Parents Are Saying
+          </h2>
+        </div>
+      </div>
+      
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="text-center font-serif text-3xl font-bold text-[#3d2914] mb-10">
-          What Parents Are Saying
-        </h2>
         <div className="grid gap-6 md:grid-cols-3">
           {/* Testimonial 1 */}
           <div className="relative bg-[#f4e4c1] border-2 border-[#d4b896] p-6 shadow-lg"
@@ -93,7 +107,8 @@ const Testimonials: React.FC = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 };
 
