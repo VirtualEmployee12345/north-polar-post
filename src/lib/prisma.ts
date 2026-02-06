@@ -16,7 +16,9 @@ function getPrismaClient(): PrismaClient {
     throw new Error('DATABASE_URL environment variable is not set')
   }
 
-  const client = new PrismaClient()
+  const client = new PrismaClient({
+    datasourceUrl: databaseUrl,
+  })
   
   if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = client
