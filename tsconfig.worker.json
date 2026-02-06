@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "noEmit": false,
+    "outDir": "./dist/worker"
+  },
+  "include": [
+    "src/cron/**/*.js",
+    "src/services/**/*.js",
+    "src/lib/**/*.ts",
+    "src/lib/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/app/**/*",
+    "**/*.test.ts",
+    "**/*.test.js"
+  ]
+}
